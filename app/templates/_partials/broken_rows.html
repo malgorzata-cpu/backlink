@@ -1,0 +1,43 @@
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th>Referring page URL</th>
+                        <th class="text-end" style="width: 110px;">Domain<br>Traffic</th>
+                        <th class="text-end" style="width: 70px;">DR</th>
+                        <th>Anchor</th>
+                        <th>Target URL (martwy)</th>
+                        <th class="text-end" style="width: 70px;">HTTP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in page.items %}
+                    <tr>
+                        <td class="text-muted small">{{ loop.index + (page.page - 1) * page.per_page }}</td>
+                        <td>
+                            <a href="{{ row.referring_page_url }}" target="_blank" rel="noopener" class="text-decoration-none">
+                                {{ row.referring_page_url|truncate_chars(90) }}
+                            </a>
+                            {% if row.referring_page_title %}
+                            <div class="text-muted small">{{ row.referring_page_title|truncate_chars(100) }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-semibold">{{ row.domain_traffic|fmt_int }}</td>
+                        <td class="text-end">{{ row.domain_rating|fmt_int }}</td>
+                        <td class="small">{{ row.anchor|truncate_chars(40) }}</td>
+                        <td class="small text-muted">{{ row.target_url|truncate_chars(60) }}</td>
+                        <td class="text-end"><span class="badge bg-danger">{{ row.target_page_http_code|fmt_int }}</span></td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">Brak danych. Wgraj plik CSV.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% include "_partials/pagination.html" %}

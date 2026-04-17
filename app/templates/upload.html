@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Upload CSV{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">📤 Upload CSV</h1>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+{% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" action="/upload" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Typ źródła</label>
+                {% for st in source_types %}
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="source_type" id="st_{{ st }}" value="{{ st }}" {% if loop.first %}checked{% endif %}>
+                    <label class="form-check-label" for="st_{{ st }}"><code>{{ st }}</code></label>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mb-3">
+                <label for="file" class="form-label fw-semibold">Plik CSV (Ahrefs export, UTF-16, TAB-delimited)</label>
+                <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Wgraj i zaimportuj</button>
+            <a href="/" class="btn btn-link">Anuluj</a>
+        </form>
+    </div>
+</div>
+
+<div class="alert alert-info mt-4 small">
+    <strong>Uwaga:</strong> brak deduplikacji — wgranie tego samego pliku ponownie podwoi liczbę wierszy w tabeli.
+</div>
+{% endblock %}

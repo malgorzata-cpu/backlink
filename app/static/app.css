@@ -1,0 +1,22 @@
+body {
+    background: #f6f8fa;
+}
+
+.table-sm td, .table-sm th {
+    padding: 0.4rem 0.5rem;
+}
+
+.table thead th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #495057;
+}
+
+a.text-decoration-none:hover {
+    text-decoration: underline !important;
+}
+
+.card.shadow-sm {
+    border: 1px solid #e1e4e8;
+}

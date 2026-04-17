@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Link Building{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Dashboard</h1>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-6">
+        <div class="card border-primary h-100">
+            <div class="card-body">
+                <h5 class="card-title">🎯 Link Opportunities</h5>
+                <p class="display-5 mb-2">{{ opportunities_count|fmt_int }}</p>
+                <p class="text-muted small">
+                    Backlinki konkurencji posortowane po Domain Traffic ↓, DR ↓, Page Traffic ↓.
+                </p>
+                {% if last_opp_import %}
+                <p class="text-muted small mb-3">
+                    Ostatni import: {{ last_opp_import.finished_at.strftime("%Y-%m-%d %H:%M") if last_opp_import.finished_at }}
+                    ({{ last_opp_import.row_count|fmt_int }} wierszy z {{ last_opp_import.filename }})
+                </p>
+                {% endif %}
+                <a class="btn btn-primary" href="/opportunities">Otwórz listę →</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-warning h-100">
+            <div class="card-body">
+                <h5 class="card-title">💔 Broken Backlinks</h5>
+                <p class="display-5 mb-2">{{ broken_count|fmt_int }}</p>
+                <p class="text-muted small">
+                    Martwe linki konkurencji — okazja do zaproponowania własnego linku zastępczego.
+                </p>
+                {% if last_broken_import %}
+                <p class="text-muted small mb-3">
+                    Ostatni import: {{ last_broken_import.finished_at.strftime("%Y-%m-%d %H:%M") if last_broken_import.finished_at }}
+                    ({{ last_broken_import.row_count|fmt_int }} wierszy z {{ last_broken_import.filename }})
+                </p>
+                {% endif %}
+                <a class="btn btn-warning" href="/broken-backlinks">Otwórz listę →</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="h4 mb-3">Ostatnie importy</h2>
+{% if last_imports %}
+<div class="table-responsive">
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Source</th>
+                <th>Plik</th>
+                <th>Wierszy</th>
+                <th>Status</th>
+                <th>Rozpoczęty</th>
+                <th>Zakończony</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in last_imports %}
+            <tr>
+                <td>{{ r.id }}</td>
+                <td><code>{{ r.source_type }}</code></td>
+                <td>{{ r.filename|truncate_chars(60) }}</td>
+                <td>{{ r.row_count|fmt_int }}</td>
+                <td>
+                    {% if r.status == "success" %}<span class="badge bg-success">success</span>
+                    {% elif r.status == "failed" %}<span class="badge bg-danger">failed</span>
+                    {% else %}<span class="badge bg-secondary">{{ r.status }}</span>{% endif %}
+                </td>
+                <td>{{ r.started_at.strftime("%Y-%m-%d %H:%M:%S") if r.started_at }}</td>
+                <td>{{ r.finished_at.strftime("%Y-%m-%d %H:%M:%S") if r.finished_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="text-muted">Brak importów. <a href="/upload">Wgraj plik CSV</a> lub uruchom <code>python -m scripts.seed</code>.</p>
+{% endif %}
+{% endblock %}

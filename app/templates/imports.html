@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Import history{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">📜 Historia importów</h1>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Source</th>
+                <th>Plik</th>
+                <th class="text-end">Wierszy</th>
+                <th>Status</th>
+                <th>Rozpoczęty</th>
+                <th>Zakończony</th>
+                <th>Błąd</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in runs %}
+            <tr>
+                <td>{{ r.id }}</td>
+                <td><code>{{ r.source_type }}</code></td>
+                <td>{{ r.filename|truncate_chars(80) }}</td>
+                <td class="text-end">{{ r.row_count|fmt_int }}</td>
+                <td>
+                    {% if r.status == "success" %}<span class="badge bg-success">success</span>
+                    {% elif r.status == "failed" %}<span class="badge bg-danger">failed</span>
+                    {% else %}<span class="badge bg-secondary">{{ r.status }}</span>{% endif %}
+                </td>
+                <td class="small">{{ r.started_at.strftime("%Y-%m-%d %H:%M:%S") if r.started_at }}</td>
+                <td class="small">{{ r.finished_at.strftime("%Y-%m-%d %H:%M:%S") if r.finished_at }}</td>
+                <td class="small text-danger">{{ r.error_message|truncate_chars(80) if r.error_message }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="text-center text-muted py-4">Brak importów.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
