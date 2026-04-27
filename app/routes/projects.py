@@ -36,8 +36,7 @@ def _normalize_domain(value: str) -> str:
     return v.rstrip("/")
 
 
-@router.get("/projects", response_class=HTMLResponse)
-def list_projects(request: Request, db: Session = Depends(get_db)):
+def _render_projects_list(request: Request, db: Session):
     projects = db.execute(select(Project).order_by(Project.name)).scalars().all()
     counts: dict[int, dict[str, int]] = {}
     for p in projects:
@@ -62,6 +61,16 @@ def list_projects(request: Request, db: Session = Depends(get_db)):
         "projects.html",
         {"request": request, "projects": projects, "counts": counts},
     )
+
+
+@router.get("/", response_class=HTMLResponse)
+def home(request: Request, db: Session = Depends(get_db)):
+    return _render_projects_list(request, db)
+
+
+@router.get("/projects", response_class=HTMLResponse)
+def list_projects(request: Request, db: Session = Depends(get_db)):
+    return _render_projects_list(request, db)
 
 
 @router.get("/projects/new", response_class=HTMLResponse)
@@ -224,7 +233,7 @@ def select_project(slug: str, db: Session = Depends(get_db)):
     project = db.execute(
         select(Project).where(Project.slug == slug)
     ).scalar_one_or_none()
-    response = RedirectResponse(url="/", status_code=303)
+    response = RedirectResponse(url="/dashboard", status_code=303)
     if project:
         response.set_cookie(
             "current_project_slug",

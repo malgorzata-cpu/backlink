@@ -10,7 +10,7 @@ from app.templating import templates
 router = APIRouter()
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("/dashboard", response_class=HTMLResponse)
 def index(request: Request, db: Session = Depends(get_db)):
     current = getattr(request.state, "current_project", None)
     if current is None:
