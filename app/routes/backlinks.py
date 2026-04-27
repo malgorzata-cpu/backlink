@@ -22,10 +22,14 @@ def list_backlinks(
     status: str = Query("all"),
     db: Session = Depends(get_db),
 ):
+    current = getattr(request.state, "current_project", None)
+    if current is None:
+        return RedirectResponse(url="/projects/new", status_code=303)
+
     if status not in VALID_STATUSES:
         status = "all"
 
-    stmt = select(ActiveBacklink)
+    stmt = select(ActiveBacklink).where(ActiveBacklink.project_id == current.id)
     if status != "all":
         stmt = stmt.where(ActiveBacklink.check_status == status)
     stmt = stmt.order_by(
@@ -37,6 +41,7 @@ def list_backlinks(
     counts = dict(
         db.execute(
             select(ActiveBacklink.check_status, func.count())
+            .where(ActiveBacklink.project_id == current.id)
             .group_by(ActiveBacklink.check_status)
         ).all()
     )
@@ -75,12 +80,17 @@ def check_single(
 
 @router.post("/backlinks/check-batch")
 def check_batch(
+    request: Request,
     background: BackgroundTasks,
     only_pending: bool = Query(True),
     limit: int = Query(200, ge=1, le=2000),
     db: Session = Depends(get_db),
 ):
-    stmt = select(ActiveBacklink.id)
+    current = getattr(request.state, "current_project", None)
+    if current is None:
+        return RedirectResponse(url="/projects/new", status_code=303)
+
+    stmt = select(ActiveBacklink.id).where(ActiveBacklink.project_id == current.id)
     if only_pending:
         stmt = stmt.where(ActiveBacklink.check_status == "pending")
     stmt = stmt.order_by(ActiveBacklink.id.asc()).limit(limit)

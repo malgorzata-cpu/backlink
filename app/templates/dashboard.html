@@ -2,7 +2,14 @@
 {% block title %}Dashboard — Link Building{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Dashboard</h1>
+<h1 class="mb-4">
+    Dashboard
+    {% if request.state.current_project %}
+    <small class="text-muted">— {{ request.state.current_project.name }}
+        ({{ request.state.current_project.primary_domain }} vs {{ request.state.current_project.competitor_domain }})
+    </small>
+    {% endif %}
+</h1>
 
 <div class="row g-4 mb-5">
     <div class="col-md-4">
@@ -47,7 +54,9 @@
                 <h5 class="card-title">📡 Active Backlinks</h5>
                 <p class="display-5 mb-2">{{ active_count|fmt_int }}</p>
                 <p class="text-muted small mb-2">
-                    Monitor naszych aktywnych linków — sprawdza, czy <code>&lt;a&gt;</code> do rafa-wino.pl wciąż jest na stronie.
+                    Monitor naszych aktywnych linków — sprawdza, czy <code>&lt;a&gt;</code> do
+                    {% if request.state.current_project %}<code>{{ request.state.current_project.primary_domain }}</code>{% else %}naszej domeny{% endif %}
+                    wciąż jest na stronie.
                 </p>
                 {% if active_count %}
                 <p class="small mb-3">
@@ -79,9 +88,10 @@
                 <th>#</th>
                 <th>Source</th>
                 <th>Plik</th>
-                <th>Wierszy</th>
+                <th class="text-end">Total</th>
+                <th class="text-end">Insert</th>
+                <th class="text-end">Update</th>
                 <th>Status</th>
-                <th>Rozpoczęty</th>
                 <th>Zakończony</th>
             </tr>
         </thead>
@@ -91,20 +101,21 @@
                 <td>{{ r.id }}</td>
                 <td><code>{{ r.source_type }}</code></td>
                 <td>{{ r.filename|truncate_chars(60) }}</td>
-                <td>{{ r.row_count|fmt_int }}</td>
+                <td class="text-end">{{ r.row_count|fmt_int }}</td>
+                <td class="text-end text-success">{{ r.rows_inserted|fmt_int }}</td>
+                <td class="text-end text-info">{{ r.rows_updated|fmt_int }}</td>
                 <td>
                     {% if r.status == "success" %}<span class="badge bg-success">success</span>
                     {% elif r.status == "failed" %}<span class="badge bg-danger">failed</span>
                     {% else %}<span class="badge bg-secondary">{{ r.status }}</span>{% endif %}
                 </td>
-                <td>{{ r.started_at.strftime("%Y-%m-%d %H:%M:%S") if r.started_at }}</td>
-                <td>{{ r.finished_at.strftime("%Y-%m-%d %H:%M:%S") if r.finished_at }}</td>
+                <td class="small">{{ r.finished_at.strftime("%Y-%m-%d %H:%M:%S") if r.finished_at }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 {% else %}
-<p class="text-muted">Brak importów. <a href="/upload">Wgraj plik CSV</a> lub uruchom <code>python -m scripts.seed</code>.</p>
+<p class="text-muted">Brak importów. <a href="/upload">Wgraj plik CSV</a>.</p>
 {% endif %}
 {% endblock %}

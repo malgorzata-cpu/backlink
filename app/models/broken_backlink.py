@@ -10,6 +10,9 @@ class BrokenBacklink(Base):
     __tablename__ = "broken_backlinks"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id"), nullable=False
+    )
 
     referring_page_title: Mapped[str | None] = mapped_column(Text, nullable=True)
     referring_page_url: Mapped[str] = mapped_column(Text, nullable=False)
@@ -55,4 +58,5 @@ class BrokenBacklink(Base):
     __table_args__ = (
         Index("ix_bb_sort", "domain_traffic"),
         Index("ix_bb_url", "referring_page_url"),
+        Index("ix_bb_dedup", "project_id", "referring_page_url", "target_url"),
     )

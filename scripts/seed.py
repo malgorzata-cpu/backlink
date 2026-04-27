@@ -1,6 +1,7 @@
-"""Idempotent seed: imports the known Ahrefs CSV files from data/ (or project root).
+"""Idempotent seed: imports the known Ahrefs CSV files for the default project.
 
 Skips a file if an ImportRun with status='success' already exists for that filename.
+Creates a default project ('rafa-wino-pl') if none exists.
 """
 
 from pathlib import Path
@@ -9,7 +10,7 @@ from sqlalchemy import select
 
 from app.config import PROJECT_ROOT
 from app.db import SessionLocal, engine
-from app.models import Base, ImportRun
+from app.models import Base, ImportRun, Project
 from app.services.csv_import import (
     SOURCE_ACTIVE_BACKLINKS,
     SOURCE_BROKEN_BACKLINKS,
@@ -40,6 +41,24 @@ def main() -> None:
     data_dir = PROJECT_ROOT / "data"
     db = SessionLocal()
     try:
+        project = db.execute(
+            select(Project).where(Project.slug == "rafa-wino-pl")
+        ).scalar_one_or_none()
+        if project is None:
+            project = Project(
+                slug="rafa-wino-pl",
+                name="Rafa Wino",
+                primary_domain="rafa-wino.pl",
+                competitor_domain="winnicalidla.pl",
+                notes="Domyślny projekt seedowany ze skryptu",
+            )
+            db.add(project)
+            db.commit()
+            db.refresh(project)
+            print(f"[create] Default project (id={project.id})")
+        else:
+            print(f"[skip] Default project exists (id={project.id})")
+
         for filename, source_type in KNOWN_FILES:
             # Look in data/ first (preferred), then project root as fallback.
             path = data_dir / filename
@@ -65,8 +84,11 @@ def main() -> None:
                 continue
 
             print(f"[import] {filename} as {source_type} ...")
-            run = import_file(db, path, source_type)
-            print(f"  -> run #{run.id}: {run.row_count} rows ({run.status})")
+            run = import_file(db, path, source_type, project.id)
+            print(
+                f"  -> run #{run.id}: {run.row_count} total "
+                f"(insert={run.rows_inserted}, update={run.rows_updated})"
+            )
     finally:
         db.close()
 

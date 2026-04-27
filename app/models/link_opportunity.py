@@ -10,6 +10,9 @@ class LinkOpportunity(Base):
     __tablename__ = "link_opportunities"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id"), nullable=False
+    )
 
     referring_page_title: Mapped[str | None] = mapped_column(Text, nullable=True)
     referring_page_url: Mapped[str] = mapped_column(Text, nullable=False)
@@ -24,8 +27,8 @@ class LinkOpportunity(Base):
     referring_domains: Mapped[int | None] = mapped_column(Integer, nullable=True)
     page_traffic: Mapped[int | None] = mapped_column(Integer, nullable=True)
     intersect: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    target_rafa: Mapped[str | None] = mapped_column(Text, nullable=True)
-    target_winnicalidla: Mapped[str | None] = mapped_column(Text, nullable=True)
+    target_primary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    target_competitor: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     import_run_id: Mapped[int | None] = mapped_column(
         ForeignKey("import_runs.id"), nullable=True
@@ -42,4 +45,5 @@ class LinkOpportunity(Base):
             "page_traffic",
         ),
         Index("ix_lo_url", "referring_page_url"),
+        Index("ix_lo_dedup", "project_id", "referring_page_url"),
     )

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Projekty{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">📁 Projekty</h1>
+    <a href="/projects/new" class="btn btn-primary">+ Nowy projekt</a>
+</div>
+
+{% if not projects %}
+<div class="alert alert-info">
+    Nie masz jeszcze żadnych projektów. <a href="/projects/new">Utwórz pierwszy</a>.
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Projekt</th>
+                        <th>Domena główna</th>
+                        <th>Konkurent</th>
+                        <th class="text-end">Opportunities</th>
+                        <th class="text-end">Broken</th>
+                        <th class="text-end">Active</th>
+                        <th style="width: 220px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in projects %}
+                    <tr {% if request.state.current_project and p.id == request.state.current_project.id %}class="table-active"{% endif %}>
+                        <td>
+                            <strong>{{ p.name }}</strong>
+                            <div class="text-muted small">slug: <code>{{ p.slug }}</code></div>
+                            {% if p.notes %}<div class="text-muted small">{{ p.notes|truncate_chars(80) }}</div>{% endif %}
+                        </td>
+                        <td><code>{{ p.primary_domain }}</code></td>
+                        <td><code>{{ p.competitor_domain }}</code></td>
+                        <td class="text-end">{{ counts[p.id].opportunities|fmt_int }}</td>
+                        <td class="text-end">{{ counts[p.id].broken|fmt_int }}</td>
+                        <td class="text-end">{{ counts[p.id].active|fmt_int }}</td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                {% if not request.state.current_project or p.id != request.state.current_project.id %}
+                                <form method="post" action="/projects/{{ p.slug }}/select" style="margin: 0;">
+                                    <button class="btn btn-sm btn-outline-info">Wybierz</button>
+                                </form>
+                                {% else %}
+                                <span class="badge bg-info align-self-center">Aktywny</span>
+                                {% endif %}
+                                <a href="/projects/{{ p.slug }}" class="btn btn-sm btn-outline-secondary">Edytuj</a>
+                                <form method="post" action="/projects/{{ p.slug }}/delete" style="margin: 0;"
+                                      onsubmit="return confirm('Usunąć projekt „{{ p.name }}” i wszystkie jego dane (link opportunities, broken backlinks, active backlinks, importy)?');">
+                                    <button class="btn btn-sm btn-outline-danger">×</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

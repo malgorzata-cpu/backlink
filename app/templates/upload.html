@@ -4,6 +4,15 @@
 {% block content %}
 <h1 class="mb-4">📤 Upload CSV</h1>
 
+{% if request.state.current_project %}
+<div class="alert alert-light border mb-3">
+    Wgrywasz do projektu <strong>{{ request.state.current_project.name }}</strong>
+    (<code>{{ request.state.current_project.primary_domain }}</code> vs
+    <code>{{ request.state.current_project.competitor_domain }}</code>).
+    Aby zmienić projekt, użyj selektora w nawigacji.
+</div>
+{% endif %}
+
 {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
 {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
 
@@ -23,6 +32,17 @@
                 <label for="file" class="form-label fw-semibold">Plik CSV (Ahrefs export, UTF-16, TAB-delimited)</label>
                 <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
             </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="dedup_with_anchor" id="dedup_with_anchor" value="1">
+                <label class="form-check-label" for="dedup_with_anchor">
+                    Uwzględnij <code>anchor</code> w kluczu deduplikacji
+                </label>
+                <div class="form-text">
+                    Domyślnie deduplikacja jest po <code>referring_page_url</code> + <code>target_url</code>.
+                    Włącz tylko gdy wiele rekordów dla tego samego URL ma różne anchory i chcesz je traktować osobno
+                    (dotyczy <code>broken_backlinks</code> i <code>active_backlinks</code>).
+                </div>
+            </div>
             <button type="submit" class="btn btn-primary">Wgraj i zaimportuj</button>
             <a href="/" class="btn btn-link">Anuluj</a>
         </form>
@@ -30,6 +50,9 @@
 </div>
 
 <div class="alert alert-info mt-4 small">
-    <strong>Uwaga:</strong> brak deduplikacji — wgranie tego samego pliku ponownie podwoi liczbę wierszy w tabeli.
+    <strong>Deduplikacja:</strong> rekordy z tym samym kluczem naturalnym (per projekt) zostaną
+    <em>zaktualizowane</em> świeżymi metrykami z eksportu, zamiast duplikowane. Dla
+    <code>active_backlinks</code> pola monitoringu (status sprawdzenia, last_checked_at, znaleziony anchor)
+    są zachowywane — re-upload nie kasuje historii sprawdzeń.
 </div>
 {% endblock %}

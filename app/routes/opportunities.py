@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -18,11 +18,19 @@ def list_opportunities(
     per_page: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    stmt = select(LinkOpportunity).order_by(
-        LinkOpportunity.domain_traffic.desc().nullslast(),
-        LinkOpportunity.domain_rating.desc().nullslast(),
-        LinkOpportunity.page_traffic.desc().nullslast(),
-        LinkOpportunity.id.asc(),
+    current = getattr(request.state, "current_project", None)
+    if current is None:
+        return RedirectResponse(url="/projects/new", status_code=303)
+
+    stmt = (
+        select(LinkOpportunity)
+        .where(LinkOpportunity.project_id == current.id)
+        .order_by(
+            LinkOpportunity.domain_traffic.desc().nullslast(),
+            LinkOpportunity.domain_rating.desc().nullslast(),
+            LinkOpportunity.page_traffic.desc().nullslast(),
+            LinkOpportunity.id.asc(),
+        )
     )
     page_obj = paginate(db, stmt, page=page, per_page=per_page)
 

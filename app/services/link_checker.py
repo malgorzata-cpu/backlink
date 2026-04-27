@@ -1,8 +1,8 @@
 """Backlink monitor: fetches each referring page and checks whether it still
-contains an <a> link pointing to our site.
+contains an <a> link pointing to our project's primary domain.
 
 Two booleans are reported per check:
-- link_found: any <a href> resolves to host containing OUR_HOST (e.g. rafa-wino.pl)
+- link_found: any <a href> resolves to host containing the project's primary_domain
 - exact_target_match: at least one such href, after normalization, equals target_url
 """
 
@@ -17,18 +17,17 @@ from urllib.parse import urljoin, urlparse, urlunparse
 
 import httpx
 from bs4 import BeautifulSoup
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import ActiveBacklink
+from app.models import ActiveBacklink, Project
 
 
 logger = logging.getLogger(__name__)
 
-OUR_HOST = "rafa-wino.pl"
-
 USER_AGENT = (
-    "Mozilla/5.0 (compatible; LinkBuildingMonitor/0.1; "
-    "+https://rafa-wino.pl/) Python/httpx"
+    "Mozilla/5.0 (compatible; LinkBuildingMonitor/0.2; "
+    "+https://github.com/malgorzata-cpu/backlink) Python/httpx"
 )
 TIMEOUT_SECONDS = 15.0
 MAX_HTML_BYTES = 5 * 1024 * 1024  # cap per-page download to 5 MiB
@@ -64,14 +63,22 @@ def _normalize_url(url: str) -> str:
     return urlunparse((p.scheme.lower() or "https", host, path, "", p.query, ""))
 
 
-def _host_matches_ours(href_host: str) -> bool:
-    h = href_host.lower()
+def _normalize_host(host: str) -> str:
+    h = host.lower().strip()
     if h.startswith("www."):
         h = h[4:]
-    return h == OUR_HOST or h.endswith("." + OUR_HOST)
+    return h
 
 
-def _scan_html(html: str, base_url: str, target_url: str | None) -> tuple[int, list[str], str | None, bool]:
+def _host_matches(href_host: str, our_host: str) -> bool:
+    h = _normalize_host(href_host)
+    our = _normalize_host(our_host)
+    return h == our or h.endswith("." + our)
+
+
+def _scan_html(
+    html: str, base_url: str, target_url: str | None, our_host: str
+) -> tuple[int, list[str], str | None, bool]:
     """Return (count, sample_hrefs, first_anchor, exact_match)."""
     soup = BeautifulSoup(html, "html.parser")
     target_norm = _normalize_url(target_url) if target_url else ""
@@ -89,7 +96,7 @@ def _scan_html(html: str, base_url: str, target_url: str | None) -> tuple[int, l
             host = urlparse(absolute).netloc
         except ValueError:
             continue
-        if not host or not _host_matches_ours(host):
+        if not host or not _host_matches(host, our_host):
             continue
         count += 1
         if len(sample) < 3:
@@ -105,6 +112,7 @@ def _scan_html(html: str, base_url: str, target_url: str | None) -> tuple[int, l
 def check_backlink(
     referring_page_url: str,
     target_url: str | None,
+    our_host: str,
     *,
     client: httpx.Client | None = None,
 ) -> CheckResult:
@@ -144,9 +152,9 @@ def check_backlink(
                 error_message=f"HTTP {http_status}",
             )
 
-        # Detect redirect away from the original referring URL host (page might be gone / parked).
-        final_host = urlparse(str(resp.url)).netloc.lower().lstrip("www.")
-        original_host = urlparse(referring_page_url).netloc.lower().lstrip("www.")
+        # Detect redirect away from the original referring URL host.
+        final_host = _normalize_host(urlparse(str(resp.url)).netloc)
+        original_host = _normalize_host(urlparse(referring_page_url).netloc)
         redirected_offsite = bool(final_host) and bool(original_host) and final_host != original_host
 
         ctype = resp.headers.get("content-type", "").lower()
@@ -163,7 +171,7 @@ def check_backlink(
             )
 
         html = resp.text[:MAX_HTML_BYTES]
-        count, sample, anchor, exact = _scan_html(html, str(resp.url), target_url)
+        count, sample, anchor, exact = _scan_html(html, str(resp.url), target_url, our_host)
 
         if count > 0:
             status = "ok"
@@ -191,7 +199,10 @@ def check_one(db: Session, backlink_id: int) -> ActiveBacklink:
     record = db.get(ActiveBacklink, backlink_id)
     if record is None:
         raise ValueError(f"ActiveBacklink id={backlink_id} not found")
-    result = check_backlink(record.referring_page_url, record.target_url)
+    project = db.get(Project, record.project_id)
+    if project is None:
+        raise ValueError(f"Project id={record.project_id} not found")
+    result = check_backlink(record.referring_page_url, record.target_url, project.primary_domain)
     _apply_result(record, result)
     db.commit()
     db.refresh(record)
@@ -214,6 +225,12 @@ def check_many(
     )
     by_id = {r.id: r for r in records}
 
+    project_ids = {r.project_id for r in records}
+    projects_rows = db.execute(
+        select(Project).where(Project.id.in_(project_ids))
+    ).scalars().all()
+    project_host_by_id = {p.id: p.primary_domain for p in projects_rows}
+
     with httpx.Client(
         timeout=TIMEOUT_SECONDS,
         follow_redirects=True,
@@ -225,6 +242,7 @@ def check_many(
                     check_backlink,
                     rec.referring_page_url,
                     rec.target_url,
+                    project_host_by_id[rec.project_id],
                     client=client,
                 ): rec.id
                 for rec in records

@@ -10,6 +10,9 @@ class ActiveBacklink(Base):
     __tablename__ = "active_backlinks"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id"), nullable=False
+    )
 
     referring_page_title: Mapped[str | None] = mapped_column(Text, nullable=True)
     referring_page_url: Mapped[str] = mapped_column(Text, nullable=False)
@@ -50,8 +53,7 @@ class ActiveBacklink(Base):
     links_in_group: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # Monitoring fields — populated by app/services/link_checker.py.
-    # check_status: pending (never checked), ok (link present), missing (page loaded but link gone),
-    # error (fetch failed), redirect (we got blocked or redirected away from the page).
+    # These are NEVER overwritten when re-importing CSV (smart upsert).
     check_status: Mapped[str] = mapped_column(
         String(16), nullable=False, default="pending"
     )
@@ -75,4 +77,5 @@ class ActiveBacklink(Base):
         Index("ix_ab_sort", "domain_traffic"),
         Index("ix_ab_url", "referring_page_url"),
         Index("ix_ab_status", "check_status"),
+        Index("ix_ab_dedup", "project_id", "referring_page_url", "target_url"),
     )

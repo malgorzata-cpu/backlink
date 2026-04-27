@@ -2,7 +2,12 @@
 {% block title %}Import history{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">📜 Historia importów</h1>
+<h1 class="mb-4">
+    📜 Historia importów
+    {% if request.state.current_project %}
+    <small class="text-muted">— {{ request.state.current_project.name }}</small>
+    {% endif %}
+</h1>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped">
@@ -11,7 +16,10 @@
                 <th>#</th>
                 <th>Source</th>
                 <th>Plik</th>
-                <th class="text-end">Wierszy</th>
+                <th class="text-end">Total</th>
+                <th class="text-end">Insert</th>
+                <th class="text-end">Update</th>
+                <th>Anchor dedup</th>
                 <th>Status</th>
                 <th>Rozpoczęty</th>
                 <th>Zakończony</th>
@@ -25,6 +33,11 @@
                 <td><code>{{ r.source_type }}</code></td>
                 <td>{{ r.filename|truncate_chars(80) }}</td>
                 <td class="text-end">{{ r.row_count|fmt_int }}</td>
+                <td class="text-end text-success">{{ r.rows_inserted|fmt_int }}</td>
+                <td class="text-end text-info">{{ r.rows_updated|fmt_int }}</td>
+                <td>
+                    {% if r.dedup_with_anchor %}<span class="badge bg-secondary">tak</span>{% else %}—{% endif %}
+                </td>
                 <td>
                     {% if r.status == "success" %}<span class="badge bg-success">success</span>
                     {% elif r.status == "failed" %}<span class="badge bg-danger">failed</span>
@@ -35,7 +48,7 @@
                 <td class="small text-danger">{{ r.error_message|truncate_chars(80) if r.error_message }}</td>
             </tr>
             {% else %}
-            <tr><td colspan="8" class="text-center text-muted py-4">Brak importów.</td></tr>
+            <tr><td colspan="11" class="text-center text-muted py-4">Brak importów dla tego projektu.</td></tr>
             {% endfor %}
         </tbody>
     </table>

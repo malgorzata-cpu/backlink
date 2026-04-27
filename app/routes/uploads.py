@@ -18,7 +18,14 @@ UPLOADS_DIR = PROJECT_ROOT / "data" / "uploads"
 
 
 @router.get("/upload", response_class=HTMLResponse)
-def upload_form(request: Request, error: str | None = None, success: str | None = None):
+def upload_form(
+    request: Request,
+    error: str | None = None,
+    success: str | None = None,
+):
+    current = getattr(request.state, "current_project", None)
+    if current is None:
+        return RedirectResponse(url="/projects/new", status_code=303)
     return templates.TemplateResponse(
         "upload.html",
         {
@@ -35,8 +42,13 @@ def upload_post(
     request: Request,
     source_type: str = Form(...),
     file: UploadFile = File(...),
+    dedup_with_anchor: str | None = Form(None),
     db: Session = Depends(get_db),
 ):
+    current = getattr(request.state, "current_project", None)
+    if current is None:
+        return RedirectResponse(url="/projects/new", status_code=303)
+
     if source_type not in SOURCE_REGISTRY:
         return RedirectResponse(
             url=f"/upload?error=Unknown+source+type:+{source_type}",
@@ -52,10 +64,17 @@ def upload_post(
         out.write(file.file.read())
 
     try:
-        run = import_file(db, dest, source_type)
+        run = import_file(
+            db,
+            dest,
+            source_type,
+            current.id,
+            dedup_with_anchor=bool(dedup_with_anchor),
+        )
     except Exception as e:
+        msg = str(e)[:300].replace(" ", "+").replace("\n", "+")
         return RedirectResponse(
-            url=f"/upload?error=Import+failed:+{type(e).__name__}",
+            url=f"/upload?error=Import+failed:+{type(e).__name__}+{msg}",
             status_code=303,
         )
 
@@ -67,14 +86,24 @@ def upload_post(
     return RedirectResponse(
         url=f"{target}?",
         status_code=303,
-        headers={"X-Import-Rows": str(run.row_count or 0)},
+        headers={
+            "X-Import-Inserted": str(run.rows_inserted or 0),
+            "X-Import-Updated": str(run.rows_updated or 0),
+        },
     )
 
 
 @router.get("/imports", response_class=HTMLResponse)
 def list_imports(request: Request, db: Session = Depends(get_db)):
+    current = getattr(request.state, "current_project", None)
+    if current is None:
+        return RedirectResponse(url="/projects/new", status_code=303)
     runs = (
-        db.execute(select(ImportRun).order_by(ImportRun.started_at.desc()))
+        db.execute(
+            select(ImportRun)
+            .where(ImportRun.project_id == current.id)
+            .order_by(ImportRun.started_at.desc())
+        )
         .scalars()
         .all()
     )

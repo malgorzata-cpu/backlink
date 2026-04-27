@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{% if project %}Edytuj projekt{% else %}Nowy projekt{% endif %}{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">
+    {% if project %}Edytuj projekt: {{ project.name }}{% else %}Nowy projekt{% endif %}
+</h1>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+<div class="card">
+<div class="card-body">
+<form method="post" action="{% if project %}/projects/{{ project.slug }}{% else %}/projects/new{% endif %}">
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Nazwa projektu</label>
+        <input type="text" name="name" class="form-control" required maxlength="128"
+               value="{{ project.name if project else (form.name if form else '') }}"
+               placeholder="np. Rafa Wino">
+        <div class="form-text">Wyświetlana nazwa projektu w interfejsie.</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Domena główna (Twoja)</label>
+        <input type="text" name="primary_domain" class="form-control" required maxlength="255"
+               value="{{ project.primary_domain if project else (form.primary_domain if form else '') }}"
+               placeholder="example.pl">
+        <div class="form-text">
+            Bez <code>https://</code> i bez slasha. Używana w monitoringu Active Backlinks
+            (sprawdzanie czy <code>&lt;a&gt;</code> do tej domeny jest na stronie referującej)
+            oraz mapowaniu kolumn link_intersect z eksportu Ahrefs.
+        </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Domena konkurenta</label>
+        <input type="text" name="competitor_domain" class="form-control" required maxlength="255"
+               value="{{ project.competitor_domain if project else (form.competitor_domain if form else '') }}"
+               placeholder="competitor.pl">
+        <div class="form-text">
+            Wymagane — link_intersect porównuje nasze backlinki z linkami konkurenta.
+            Eksport CSV z Ahrefs musi mieć kolumnę <code>{nazwa_domeny}/</code> dla obu domen.
+        </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Notatki (opcjonalne)</label>
+        <textarea name="notes" class="form-control" rows="3" maxlength="2000">{{ project.notes if project and project.notes else (form.notes if form else '') }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">
+        {% if project %}Zapisz zmiany{% else %}Utwórz projekt{% endif %}
+    </button>
+    <a href="/projects" class="btn btn-link">Anuluj</a>
+</form>
+</div>
+</div>
+{% endblock %}

@@ -42,6 +42,12 @@
         {% elif row.http_status %}
             <div class="small text-muted">HTTP {{ row.http_status }}</div>
         {% endif %}
+        {% if row.lost_status %}
+        <div class="small text-warning mt-1" title="Status z Ahrefs">
+            Ahrefs: {{ row.lost_status|truncate_chars(20) }}
+            {% if row.lost %}<br><span class="text-muted">{{ row.lost.strftime("%Y-%m-%d") }}</span>{% endif %}
+        </div>
+        {% endif %}
     </td>
     <td class="small text-muted">
         {% if row.last_checked_at %}
