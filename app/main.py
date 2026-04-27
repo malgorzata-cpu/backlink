@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.routes import broken, dashboard, opportunities, uploads
+from app.routes import backlinks, broken, dashboard, opportunities, uploads
 
 
 def create_app() -> FastAPI:
@@ -21,6 +21,7 @@ def create_app() -> FastAPI:
     app.include_router(dashboard.router)
     app.include_router(opportunities.router)
     app.include_router(broken.router)
+    app.include_router(backlinks.router)
     app.include_router(uploads.router)
 
     @app.get("/healthz")

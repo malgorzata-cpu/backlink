@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Active Backlinks{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="mb-1">📡 Active Backlinks — monitor</h1>
+        <p class="text-muted mb-0 small">
+            Sprawdza, czy strony referujące nadal zawierają <code>&lt;a&gt;</code> do
+            <code>rafa-wino.pl</code>. Sortowanie: Domain Traffic ↓.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <form method="post" action="/backlinks/check-batch" class="d-inline">
+            <input type="hidden" name="only_pending" value="true">
+            <button type="submit" class="btn btn-outline-primary btn-sm"
+                    onclick="return confirm('Zakolejkować sprawdzenie do 200 rekordów ze statusem pending?');">
+                ▶ Sprawdź pending (200)
+            </button>
+        </form>
+        <a href="/upload" class="btn btn-outline-secondary btn-sm">+ Upload CSV</a>
+    </div>
+</div>
+
+<div class="mb-3 d-flex gap-2 flex-wrap">
+    {% set status_defs = [
+        ("all",      "Wszystkie",  "secondary"),
+        ("ok",       "OK",         "success"),
+        ("missing",  "Brak linka", "danger"),
+        ("redirect", "Redirect",   "warning"),
+        ("error",    "Błąd",       "dark"),
+        ("pending",  "Pending",    "info"),
+    ] %}
+    {% for key, label, color in status_defs %}
+        {% set total = page.total if (key == status) else (counts.get(key, 0) if key != "all" else (counts.values()|sum)) %}
+        <a href="/backlinks?status={{ key }}"
+           class="btn btn-sm {% if status == key %}btn-{{ color }}{% else %}btn-outline-{{ color }}{% endif %}">
+            {{ label }}
+            <span class="badge bg-light text-dark ms-1">{{ total|fmt_int }}</span>
+        </a>
+    {% endfor %}
+</div>
+
+<div id="backlinks-table">
+    {% include "_partials/backlinks_rows.html" %}
+</div>
+{% endblock %}

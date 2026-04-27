@@ -1,0 +1,30 @@
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th>Referring page URL</th>
+                        <th class="text-end" style="width: 100px;">DT</th>
+                        <th class="text-end" style="width: 60px;">DR</th>
+                        <th>Anchor (Ahrefs)</th>
+                        <th>Target URL</th>
+                        <th style="width: 130px;">Status</th>
+                        <th style="width: 140px;">Sprawdzono</th>
+                        <th style="width: 80px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in page.items %}
+                    {% include "_partials/backlinks_row.html" %}
+                {% else %}
+                    <tr><td colspan="9" class="text-center text-muted py-4">Brak danych. Wgraj plik CSV przez <a href="/upload">/upload</a>.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% include "_partials/pagination.html" %}

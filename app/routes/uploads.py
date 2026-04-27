@@ -59,11 +59,11 @@ def upload_post(
             status_code=303,
         )
 
-    target = (
-        "/opportunities"
-        if source_type == "link_intersect"
-        else "/broken-backlinks"
-    )
+    target = {
+        "link_intersect": "/opportunities",
+        "broken_backlinks": "/broken-backlinks",
+        "active_backlinks": "/backlinks",
+    }.get(source_type, "/")
     return RedirectResponse(
         url=f"{target}?",
         status_code=303,

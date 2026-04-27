@@ -5,7 +5,7 @@
 <h1 class="mb-4">Dashboard</h1>
 
 <div class="row g-4 mb-5">
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="card border-primary h-100">
             <div class="card-body">
                 <h5 class="card-title">🎯 Link Opportunities</h5>
@@ -16,14 +16,14 @@
                 {% if last_opp_import %}
                 <p class="text-muted small mb-3">
                     Ostatni import: {{ last_opp_import.finished_at.strftime("%Y-%m-%d %H:%M") if last_opp_import.finished_at }}
-                    ({{ last_opp_import.row_count|fmt_int }} wierszy z {{ last_opp_import.filename }})
+                    ({{ last_opp_import.row_count|fmt_int }} wierszy)
                 </p>
                 {% endif %}
                 <a class="btn btn-primary" href="/opportunities">Otwórz listę →</a>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="card border-warning h-100">
             <div class="card-body">
                 <h5 class="card-title">💔 Broken Backlinks</h5>
@@ -34,10 +34,37 @@
                 {% if last_broken_import %}
                 <p class="text-muted small mb-3">
                     Ostatni import: {{ last_broken_import.finished_at.strftime("%Y-%m-%d %H:%M") if last_broken_import.finished_at }}
-                    ({{ last_broken_import.row_count|fmt_int }} wierszy z {{ last_broken_import.filename }})
+                    ({{ last_broken_import.row_count|fmt_int }} wierszy)
                 </p>
                 {% endif %}
                 <a class="btn btn-warning" href="/broken-backlinks">Otwórz listę →</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-info h-100">
+            <div class="card-body">
+                <h5 class="card-title">📡 Active Backlinks</h5>
+                <p class="display-5 mb-2">{{ active_count|fmt_int }}</p>
+                <p class="text-muted small mb-2">
+                    Monitor naszych aktywnych linków — sprawdza, czy <code>&lt;a&gt;</code> do rafa-wino.pl wciąż jest na stronie.
+                </p>
+                {% if active_count %}
+                <p class="small mb-3">
+                    <span class="badge bg-success">OK {{ active_status_counts.get("ok", 0)|fmt_int }}</span>
+                    <span class="badge bg-danger">Brak {{ active_status_counts.get("missing", 0)|fmt_int }}</span>
+                    <span class="badge bg-warning text-dark">Redirect {{ active_status_counts.get("redirect", 0)|fmt_int }}</span>
+                    <span class="badge bg-dark">Błąd {{ active_status_counts.get("error", 0)|fmt_int }}</span>
+                    <span class="badge bg-secondary">Pending {{ active_status_counts.get("pending", 0)|fmt_int }}</span>
+                </p>
+                {% endif %}
+                {% if last_active_import %}
+                <p class="text-muted small mb-3">
+                    Ostatni import: {{ last_active_import.finished_at.strftime("%Y-%m-%d %H:%M") if last_active_import.finished_at }}
+                    ({{ last_active_import.row_count|fmt_int }} wierszy)
+                </p>
+                {% endif %}
+                <a class="btn btn-info text-white" href="/backlinks">Otwórz monitor →</a>
             </div>
         </div>
     </div>

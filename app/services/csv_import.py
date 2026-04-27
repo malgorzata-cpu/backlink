@@ -7,11 +7,12 @@ from typing import Any, Iterable
 
 from sqlalchemy.orm import Session
 
-from app.models import BrokenBacklink, ImportRun, LinkOpportunity
+from app.models import ActiveBacklink, BrokenBacklink, ImportRun, LinkOpportunity
 
 
 SOURCE_LINK_INTERSECT = "link_intersect"
 SOURCE_BROKEN_BACKLINKS = "broken_backlinks"
+SOURCE_ACTIVE_BACKLINKS = "active_backlinks"
 
 BATCH_SIZE = 1000
 
@@ -72,9 +73,50 @@ BROKEN_BACKLINKS_MAP: dict[str, Any] = {
     "Page category": "page_category",
 }
 
+ACTIVE_BACKLINKS_MAP: dict[str, Any] = {
+    "Referring page title": "referring_page_title",
+    "Referring page URL": "referring_page_url",
+    "Language": "language",
+    "Platform": "platform",
+    "Referring page HTTP code": ("referring_page_http_code", int),
+    "Domain rating": ("domain_rating", int),
+    "UR": ("url_rating", int),
+    "Domain traffic": ("domain_traffic", int),
+    "Referring domains": ("referring_domains", int),
+    "Linked domains": ("linked_domains", int),
+    "External links": ("external_links", int),
+    "Page traffic": ("page_traffic", int),
+    "Keywords": ("keywords", int),
+    "Target URL": "target_url",
+    "Left context": "left_context",
+    "Anchor": "anchor",
+    "Right context": "right_context",
+    "Redirect Chain URLs": "redirect_chain_urls",
+    "Redirect Chain status codes": "redirect_chain_status_codes",
+    "Type": "type",
+    "Is spam": ("is_spam", bool),
+    "Content": ("content", bool),
+    "Nofollow": ("nofollow", bool),
+    "UGC": ("ugc", bool),
+    "Sponsored": ("sponsored", bool),
+    "Rendered": ("rendered", bool),
+    "Raw": ("raw", bool),
+    "Lost status": "lost_status",
+    "Drop reason": "drop_reason",
+    "Discovered status": "discovered_status",
+    "First seen": ("first_seen", datetime),
+    "Last seen": ("last_seen", datetime),
+    "Lost": ("lost", datetime),
+    "Author": "author",
+    "Page type": "page_type",
+    "Page category": "page_category",
+    "Links in group": ("links_in_group", int),
+}
+
 SOURCE_REGISTRY = {
     SOURCE_LINK_INTERSECT: (LinkOpportunity, LINK_INTERSECT_MAP),
     SOURCE_BROKEN_BACKLINKS: (BrokenBacklink, BROKEN_BACKLINKS_MAP),
+    SOURCE_ACTIVE_BACKLINKS: (ActiveBacklink, ACTIVE_BACKLINKS_MAP),
 }
 
 

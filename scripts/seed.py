@@ -1,4 +1,4 @@
-"""Idempotent seed: imports the two known Ahrefs CSV files from data/.
+"""Idempotent seed: imports the known Ahrefs CSV files from data/ (or project root).
 
 Skips a file if an ImportRun with status='success' already exists for that filename.
 """
@@ -11,6 +11,7 @@ from app.config import PROJECT_ROOT
 from app.db import SessionLocal, engine
 from app.models import Base, ImportRun
 from app.services.csv_import import (
+    SOURCE_ACTIVE_BACKLINKS,
     SOURCE_BROKEN_BACKLINKS,
     SOURCE_LINK_INTERSECT,
     import_file,
@@ -26,6 +27,10 @@ KNOWN_FILES = [
         "winnicalidla.pl-broken-backlinks-subdomains_2026-04-17_09-34-06.csv",
         SOURCE_BROKEN_BACKLINKS,
     ),
+    (
+        "rafa-wino.pl-backlinks-subdomains_2026-04-17_08-18-41.csv",
+        SOURCE_ACTIVE_BACKLINKS,
+    ),
 ]
 
 
@@ -36,9 +41,14 @@ def main() -> None:
     db = SessionLocal()
     try:
         for filename, source_type in KNOWN_FILES:
+            # Look in data/ first (preferred), then project root as fallback.
             path = data_dir / filename
             if not path.exists():
-                print(f"[skip] {filename} — file not found in data/")
+                fallback = PROJECT_ROOT / filename
+                if fallback.exists():
+                    path = fallback
+            if not path.exists():
+                print(f"[skip] {filename} — file not found in data/ or project root")
                 continue
 
             existing = db.execute(

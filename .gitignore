@@ -11,3 +11,4 @@ data/uploads/*
 *.csv
 .idea/
 .vscode/
+.claude/

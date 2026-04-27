@@ -1,0 +1,63 @@
+{% set status_color = {
+    "ok": "success",
+    "missing": "danger",
+    "error": "dark",
+    "redirect": "warning",
+    "pending": "secondary",
+}.get(row.check_status, "secondary") %}
+<tr id="bl-row-{{ row.id }}">
+    <td class="text-muted small">{{ row.id }}</td>
+    <td>
+        <a href="{{ row.referring_page_url }}" target="_blank" rel="noopener" class="text-decoration-none">
+            {{ row.referring_page_url|truncate_chars(80) }}
+        </a>
+        {% if row.referring_page_title %}
+        <div class="text-muted small">{{ row.referring_page_title|truncate_chars(90) }}</div>
+        {% endif %}
+        {% if row.found_anchor %}
+        <div class="small mt-1">
+            <span class="badge bg-success-subtle text-success-emphasis">znaleziony anchor:</span>
+            <span class="text-muted">„{{ row.found_anchor|truncate_chars(60) }}”</span>
+        </div>
+        {% endif %}
+        {% if row.error_message %}
+        <div class="small text-danger mt-1">⚠ {{ row.error_message|truncate_chars(140) }}</div>
+        {% endif %}
+    </td>
+    <td class="text-end fw-semibold">{{ row.domain_traffic|fmt_int }}</td>
+    <td class="text-end">{{ row.domain_rating|fmt_int }}</td>
+    <td class="small">{{ row.anchor|truncate_chars(40) }}</td>
+    <td class="small text-muted">{{ row.target_url|truncate_chars(50) }}</td>
+    <td>
+        <span class="badge bg-{{ status_color }}">{{ row.check_status }}</span>
+        {% if row.check_status == "ok" %}
+            {% if row.exact_target_match %}
+                <div class="small text-success">✓ exact URL</div>
+            {% else %}
+                <div class="small text-warning">URL inny</div>
+            {% endif %}
+            {% if row.found_count and row.found_count > 1 %}
+                <div class="small text-muted">×{{ row.found_count }}</div>
+            {% endif %}
+        {% elif row.http_status %}
+            <div class="small text-muted">HTTP {{ row.http_status }}</div>
+        {% endif %}
+    </td>
+    <td class="small text-muted">
+        {% if row.last_checked_at %}
+            {{ row.last_checked_at.strftime("%Y-%m-%d %H:%M") }}
+        {% else %}
+            —
+        {% endif %}
+    </td>
+    <td>
+        <button class="btn btn-sm btn-outline-primary"
+                hx-post="/backlinks/{{ row.id }}/check"
+                hx-target="#bl-row-{{ row.id }}"
+                hx-swap="outerHTML"
+                hx-disabled-elt="this"
+                title="Sprawdź teraz">
+            ↻
+        </button>
+    </td>
+</tr>
